@@ -9,6 +9,7 @@
  */
 
 import { generateRandomBytes, bytesToBase64, generateSafetyFingerprint } from '../crypto/e2ee';
+import { apiService } from './apiService';
 
 export interface CloudMailAccount {
   email: string; // e.g. "panda@cloudmail.com"
@@ -239,7 +240,55 @@ export class UserVaultManager {
   }
 
   /**
-   * Authenticates user against their isolated vault
+   * Registers a new account with its isolated vault (Cloud + Local)
+   */
+  public static async registerAccountAsync(
+    email: string,
+    password: string,
+    nickname: string,
+    avatar: string,
+    cloudMailId?: string,
+    bio?: string
+  ): Promise<CloudMailAccount> {
+    const account = await apiService.register({
+      email,
+      password,
+      nickname,
+      avatar: '🐼',
+      cloudMailId,
+      bio,
+    });
+    this.recordAccount(account);
+    const syncedVault = await apiService.syncVault(account.email);
+    if (syncedVault) {
+      this.saveUserVaultLocal(syncedVault);
+    }
+    return account;
+  }
+
+  /**
+   * Authenticates user against cloud & isolated vault across devices
+   */
+  public static async loginAccountAsync(email: string, password: string): Promise<CloudMailAccount> {
+    const { account, vault } = await apiService.login(email, password);
+    this.recordAccount(account);
+    this.saveUserVaultLocal(vault);
+    return account;
+  }
+
+  /**
+   * Synchronizes local vault with cloud store across devices
+   */
+  public static async syncVaultWithCloud(email: string): Promise<UserVaultData | null> {
+    const cloudVault = await apiService.syncVault(email);
+    if (cloudVault) {
+      this.saveUserVaultLocal(cloudVault);
+    }
+    return cloudVault;
+  }
+
+  /**
+   * Authenticates user against their isolated vault (Local fallback)
    */
   public static loginAccount(email: string, password: string): CloudMailAccount {
     const normalized = this.normalizeEmail(email);
@@ -268,12 +317,17 @@ export class UserVaultManager {
     }
   }
 
-  /**
-   * Persists the user's isolated database vault
-   */
-  public static saveUserVault(vault: UserVaultData): void {
+  public static saveUserVaultLocal(vault: UserVaultData): void {
     const key = VAULT_PREFIX + vault.account.email;
     localStorage.setItem(key, JSON.stringify(vault));
+  }
+
+  /**
+   * Persists the user's isolated database vault (Local + Cloud)
+   */
+  public static saveUserVault(vault: UserVaultData): void {
+    this.saveUserVaultLocal(vault);
+    apiService.saveVault(vault);
   }
 
   /**
@@ -287,6 +341,7 @@ export class UserVaultManager {
     if (!vault) return;
     vault.messages.push(message);
     this.saveUserVault(vault);
+    apiService.sendMessage(currentUserEmail, message);
 
     // If direct message, also deliver to recipient's isolated vault if present on this device
     if (!message.isGroup && message.toEmail !== currentUserEmail) {
@@ -432,7 +487,19 @@ export class UserVaultManager {
   }
 
   /**
-   * Adds a friend strictly using their WeChat ID (微信号)
+   * Adds a friend using Chat ID across devices (Cloud + Local)
+   */
+  public static async addFriendByWeChatIdAsync(currentUserEmail: string, wechatId: string): Promise<Contact> {
+    const contact = await apiService.addFriend(currentUserEmail, wechatId);
+    const updatedVault = await apiService.syncVault(currentUserEmail);
+    if (updatedVault) {
+      this.saveUserVaultLocal(updatedVault);
+    }
+    return contact;
+  }
+
+  /**
+   * Adds a friend strictly using Chat ID (Local fallback)
    */
   public static addFriendByWeChatId(currentUserEmail: string, wechatId: string): Contact {
     const cleanId = wechatId.trim();

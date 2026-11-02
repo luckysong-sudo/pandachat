@@ -26,7 +26,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onLoginSuccess }) 
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     if (!email.trim() || !password.trim()) {
@@ -35,33 +35,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onLoginSuccess }) 
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      try {
-        if (mode === 'login') {
-          const account = UserVaultManager.loginAccount(email, password);
-          onLoginSuccess(account);
-        } else {
-          if (!nickname.trim()) {
-            setErrorMsg('请填写萌萌哒熊猫昵称');
-            setIsLoading(false);
-            return;
-          }
-          const account = UserVaultManager.registerAccount(
-            email,
-            password,
-            nickname,
-            '🐼', // Fixed panda avatar
-            undefined,
-            bio
-          );
-          onLoginSuccess(account);
+    try {
+      if (mode === 'login') {
+        const account = await UserVaultManager.loginAccountAsync(email, password);
+        onLoginSuccess(account);
+      } else {
+        if (!nickname.trim()) {
+          setErrorMsg('请填写萌萌哒熊猫昵称');
+          setIsLoading(false);
+          return;
         }
-      } catch (err: unknown) {
-        setErrorMsg((err as Error).message || '操作失败');
-      } finally {
-        setIsLoading(false);
+        const account = await UserVaultManager.registerAccountAsync(
+          email,
+          password,
+          nickname,
+          '🐼', // Fixed panda avatar
+          undefined,
+          bio
+        );
+        onLoginSuccess(account);
       }
-    }, 200);
+    } catch (err: unknown) {
+      setErrorMsg((err as Error).message || '操作失败');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

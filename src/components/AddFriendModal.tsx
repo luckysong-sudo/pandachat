@@ -26,13 +26,13 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
 
     try {
-      const added = UserVaultManager.addFriendByWeChatId(currentUserEmail, friendWeChatId.trim());
+      const added = await UserVaultManager.addFriendByWeChatIdAsync(currentUserEmail, friendWeChatId.trim());
       setSuccessMsg(`🎉 成功添加好友「${added.nickname}」(${friendWeChatId.trim()}) 至您的通讯录！`);
       setTimeout(() => {
         onFriendAdded();

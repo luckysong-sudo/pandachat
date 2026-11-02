@@ -8,6 +8,8 @@ import {
   ChevronLeft
 } from 'lucide-react';
 
+import { PWAInstallButton } from './PWAInstallButton';
+
 interface WeChatNavbarProps {
   title: string;
   unreadTotal: number;
@@ -67,8 +69,11 @@ export const WeChatNavbar: React.FC<WeChatNavbarProps> = ({
         </div>
       </div>
 
-      {/* Right Controls: Mailbox shortcut and Classic WeChat '+' button */}
+      {/* Right Controls: PWA Install, Mailbox shortcut and Classic WeChat '+' button */}
       <div className="flex items-center space-x-1.5 relative">
+        {/* PWA / APK Mobile Install Prompt */}
+        <PWAInstallButton />
+
         {/* Mailbox shortcut button */}
         <button
           onClick={onOpenMailbox}

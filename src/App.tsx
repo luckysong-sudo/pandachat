@@ -108,6 +108,18 @@ export default function App() {
     reloadVault();
   }, [currentAccount, reloadVault]);
 
+  // Periodic background cloud sync for cross-device updates (friends, messages, profile)
+  useEffect(() => {
+    if (!currentAccount) return;
+    const interval = setInterval(async () => {
+      const updatedVault = await UserVaultManager.syncVaultWithCloud(currentAccount.email);
+      if (updatedVault) {
+        setUserVault(updatedVault);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [currentAccount]);
+
   // Wiretap listener
   useEffect(() => {
     setWiretapPackets(networkRelay.getWiretapLog());
