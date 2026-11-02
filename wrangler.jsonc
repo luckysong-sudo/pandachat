@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "saber-chat-e2ee",
+  "main": "functions/_worker.js",
+  "compatibility_date": "2026-11-01",
+  "pages_build_output_dir": "dist",
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "APP_NAME": "Saber-Chat v2",
+    "ZERO_KNOWLEDGE_MODE": "enforced"
+  }
+}

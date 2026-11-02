@@ -1,0 +1,6 @@
+{
+  "name": "Panda (E2EE Serverless)",
+  "description": "Zero-backdoor, WebAssembly-accelerated, end-to-end encrypted messaging platform deployable on Cloudflare serverless infrastructure with zero server costs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
